@@ -72,7 +72,6 @@ void init_mythreadlib() {
  
   t_state[0].tid = 0;
   running = &t_state[0];
-  printf("*** THREAD %i READY\n",t_state[i].tid);
   /* Initialize network and clock interrupts */
   init_network_interrupt();
   init_interrupt();
@@ -81,7 +80,7 @@ void init_mythreadlib() {
 
 /* Create and intialize a new thread with body fun_addr and one integer argument */ 
 int mythread_create (void (*fun_addr)(),int priority)
-{
+{ 
   int i;
   
   if (!init) { init_mythreadlib(); init=1;}
@@ -109,7 +108,6 @@ int mythread_create (void (*fun_addr)(),int priority)
   disable_interrupt();
   enqueue(q,&t_state[i]);
   enable_interrupt();
-  printf("*** THREAD %i READY\n",t_state[i].tid);
   makecontext(&t_state[i].run_env, fun_addr, 1); 
   return i;
 } /****** End my_thread_create() ******/
@@ -141,7 +139,6 @@ void mythread_exit() {
     activator arguments have changed, so we have to include the current thread on the first 
     argument for swapping between current and next process (stated by the scheduler).
   */
-  printf("*** THREAD %i FINISHED : SET CONTEXT OF %i\n", t_state[tid].tid, (*next).tid);
   activator(&t_state[tid], next);
 }
 
@@ -201,20 +198,14 @@ TCB* scheduler(){
   }
 
   /*
-    SECOND CASE: Clock interrupt.
+    SECOND CASE: Quantum consumed.
 
     We execute this condition inside the scheduler when a clock interruption
-    happens, from timer_interrupt(). That means that a tick has been 
-    consumed from the previous call to the scheduler, and, therefore, the
-    remaining ticks on the CPU for the current thread are reduced by one.
+    happens, in case all the ticks were consumed. Therefore, we have to preempt 
+    the current thread from the CPU and execute the next one in the ready queue.
   */
-  t_state[tid].ticks -= 1;
   
-  /* 
-    If all the ticks were consumed, we have to preempt the current thread
-    from the CPU and execute the next one in the waiting queue.
-  */
-  if(t_state[tid].ticks == 0){
+  else{
     /* To avoid segementation fault error, we just check if the queue is not empty. */
     
     if(!queue_empty(q)){
@@ -241,14 +232,6 @@ TCB* scheduler(){
       exit(1);
     }
   }
-  /* 
-    The current thread has not exhausted its quantum, so the next thread to be executed
-    is again itself.
-  */
-  else{
-    /* Return current thread. */
-    return &t_state[tid];
-  }
 }
 
 
@@ -257,17 +240,24 @@ void timer_interrupt(int sig)
 {
   /* Get current thread ID. */
   int tid = mythread_gettid();  
-  /* Get next thread to be executed. */
-  TCB* next = scheduler();
+  /* Update the ticks. */
+  t_state[tid].ticks -= 1;
 
-  /* 
-    In case we have changed the thread to be executed in the next tick,
-    we perform a context switch.
-  */
-  if (t_state[tid].tid != (*next).tid)
+  /* In case the quantum was consumed. */
+  if(t_state[tid].ticks == 0){
+  	/* Get next thread to be executed. */
+  	TCB* next = scheduler();
+
+ 	 /* 
+    	In case we have changed the thread to be executed in the next tick,
+    	we perform a context switch.
+ 	 */
+  
     /* Change current thread context to new thread context. */
     printf("*** SWAPCONTEXT FROM %i to %i\n",t_state[tid].tid,(*next).tid);
     activator(&t_state[tid], next);
+  }
+  
 } 
 
 /* Activator */

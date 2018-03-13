@@ -20,7 +20,7 @@ static TCB t_state[N];
 
 /* Current running thread */
 static TCB* running;
-static int current = 0;
+static int current = 0; 
 
 /* Variable indicating if the library is initialized (init == 1) or not (init == 0) */
 static int init=0;
@@ -79,7 +79,7 @@ void init_mythreadlib() {
  
   t_state[0].tid = 0;
   running = &t_state[0];
-  printf("*** THREAD %i READY\n",t_state[i].tid);
+  printf("*** THREAD %i READY\n",t_state[0].tid);
   /* Initialize network and clock interrupts */
   init_network_interrupt();
   init_interrupt();
@@ -114,30 +114,39 @@ int mythread_create (void (*fun_addr)(),int priority)
   t_state[i].ticks = QUANTUM_TICKS;
 
   makecontext(&t_state[i].run_env, fun_addr, 1); 
+  printf("*** THREAD %i READY\n",t_state[i].tid);
   /* If it is Low priority, Insert the newly created thread into the low priority queue */
-  if(priority == LOW_PRIORITY) enqueue(low_q,&t_state[i]);
+  if(priority == LOW_PRIORITY){
+
+    disable_interrupt();
+    enqueue(low_q,&t_state[i]);
+    enable_interrupt();
+  } 
   /* If it is high priority and there is a low priority running */
   else if(t_state[current].priority == LOW_PRIORITY){
 
       //FALTAN MENSAJES
       
-      tid = current;
+      int tid = current;
       current = i;
-      t_state[current].state = READY; //Preguntar
       /* Set the remaining ticks for the next execution to the ones of the quantum slice. */
       t_state[tid].ticks = QUANTUM_TICKS;
-      t_state[tid].state = READY;
       disable_interrupt();
       /* Equeue the current process so that it can be executed again. */
       enqueue(low_q,&t_state[tid]);
       enable_interrupt();
-
+      printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d", t_state[tid].tid, t_state[current].tid);
       //Activate the new thread
       activator(&t_state[tid],&t_state[current]);
   } 
-  else enqueue(high_q, &t_state[i]);
+  else{
+    
+    disable_interrupt();
+    enqueue(high_q, &t_state[i]);
+    enable_interrupt();
+
+  } 
   
-  printf("*** THREAD %i READY\n",t_state[i].tid);
   return i;
 } /****** End my_thread_create() ******/
 
@@ -208,8 +217,6 @@ TCB* scheduler(){
   */
   if(t_state[tid].state == FREE){
 
-    TCB *s;
-
     if(!queue_empty(high_q)){
 
       disable_interrupt();
@@ -250,13 +257,11 @@ TCB* scheduler(){
     consumed from the previous call to the scheduler, and, therefore, the
     remaining ticks on the CPU for the current thread are reduced by one.
   */
-  t_state[tid].ticks -= 1;
   
   /* 
     If all the ticks were consumed, we have to preempt the current thread
     from the CPU and execute the next one in the waiting queue.
   */
-  if (t_state[tid].priority == HIGH_PRIORITY || t_state[tid].ticks != 0) return &t_state[tid];;
   else{
     /* To avoid segementation fault error, we just check if the queue is not empty. */
     
@@ -291,19 +296,29 @@ TCB* scheduler(){
 /* Timer interrupt  */
 void timer_interrupt(int sig)
 {
+
   /* Get current thread ID. */
   int tid = mythread_gettid();  
-  /* Get next thread to be executed. */
-  TCB* next = scheduler();
+  if (t_state[tid].priority == HIGH_PRIORITY) return;
+  
+  /* Update the ticks. */
+  t_state[tid].ticks -= 1;
 
-  /* 
-    In case we have changed the thread to be executed in the next tick,
-    we perform a context switch.
-  */
-  if (t_state[tid].tid != (*next).tid)
+  /* In case the quantum was consumed. */
+  if(t_state[tid].ticks == 0){
+    /* Get next thread to be executed. */
+    TCB* next = scheduler();
+
+   /* 
+      In case we have changed the thread to be executed in the next tick,
+      we perform a context switch.
+   */
+
     /* Change current thread context to new thread context. */
     printf("*** SWAPCONTEXT FROM %i to %i\n",t_state[tid].tid,(*next).tid);
     activator(&t_state[tid], next);
+  }
+
 } 
 
 /* Activator */
