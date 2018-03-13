@@ -191,9 +191,8 @@ TCB* scheduler(){
     }
     /* Otherwise, there are no threads waiting to be executed. */
     else{
-      printf("FINISH\n"); 
-      /* Leave the program. */
-      exit(1);
+      t_state[tid].ticks = QUANTUM_TICKS;
+      return &t_state[tid];
     }
   }
 
@@ -252,10 +251,11 @@ void timer_interrupt(int sig)
     	In case we have changed the thread to be executed in the next tick,
     	we perform a context switch.
  	 */
-  
+  	if(t_state[tid].tid != (*next).tid){
     /* Change current thread context to new thread context. */
     printf("*** SWAPCONTEXT FROM %i to %i\n",t_state[tid].tid,(*next).tid);
     activator(&t_state[tid], next);
+	}
   }
   
 } 
