@@ -116,29 +116,31 @@ int mythread_create (void (*fun_addr)(),int priority)
 
   makecontext(&t_state[i].run_env, fun_addr, 1); 
 
-  int tid = mythread_gettid();
   printf("Thread %d Priority %d\n", t_state[i].tid, priority);
 
   /* If it is Low priority, Insert the newly created thread into the low priority queue */
   if(priority == LOW_PRIORITY){
 
     disable_interrupt();
-    enqueue(low_q,&t_state[i]);
+    enqueue(low_q,&t_state[i]); 
     enable_interrupt();
   } 
   /* If it is high priority and there is a low priority running */
-  else if(t_state[tid].priority == LOW_PRIORITY){
+  else if(t_state[current].priority == LOW_PRIORITY){
+
+      int old = current;
+      current = i;
       
       /* Set the remaining ticks for the next execution to the ones of the quantum slice. */
-      t_state[tid].ticks = QUANTUM_TICKS;
+      t_state[old].ticks = QUANTUM_TICKS;
       disable_interrupt();
       /* Equeue the current process so that it can be executed again. */
-      enqueue(low_q,&t_state[tid]);
+      enqueue(low_q,&t_state[old]);
       enable_interrupt();
 
-      printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d\n", t_state[tid].tid, t_state[i].tid);
+      printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d\n", t_state[old].tid, t_state[i].tid);
       //Activate the new thread
-      activator(&t_state[tid],&t_state[i]);
+      activator(&t_state[old],&t_state[current]);
   } 
 
   else{
