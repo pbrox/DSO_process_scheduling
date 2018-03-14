@@ -86,7 +86,7 @@ void init_mythreadlib() {
   init_interrupt();
 }
 
-
+ 
 /* Create and intialize a new thread with body fun_addr and one integer argument */ 
 int mythread_create (void (*fun_addr)(),int priority)
 {
@@ -109,7 +109,7 @@ int mythread_create (void (*fun_addr)(),int priority)
     exit(-1);
   }
   t_state[i].tid = i;
-  t_state[i].run_env.uc_stack.ss_size = STACKSIZE;
+  t_state[i].run_env.uc_stack.ss_size = STACKSIZE;  
   t_state[i].run_env.uc_stack.ss_flags = 0;
   /* The initial quantum for any process is stated in the constant QUANTUM_TICKS */
   t_state[i].ticks = QUANTUM_TICKS;
@@ -136,7 +136,7 @@ int mythread_create (void (*fun_addr)(),int priority)
       enqueue(low_q,&t_state[tid]);
       enable_interrupt();
 
-      printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d", t_state[tid].tid, t_state[i].tid);
+      printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d\n", t_state[tid].tid, t_state[i].tid);
       //Activate the new thread
       activator(&t_state[tid],&t_state[i]);
   } 
@@ -299,7 +299,7 @@ void timer_interrupt(int sig)
 
   /* Get current thread ID. */
   int tid = mythread_gettid();  
-  printf("Thread %d Priority %d Ticks %d\n", t_state[tid].tid, t_state[tid].priority, t_state[tid].ticks);
+  //printf("Thread %d Priority %d Ticks %d\n", t_state[tid].tid, t_state[tid].priority, t_state[tid].ticks);
 
   if (t_state[tid].priority == LOW_PRIORITY){
     /* Update the ticks. */

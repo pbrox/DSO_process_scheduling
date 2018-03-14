@@ -9,7 +9,7 @@
 
 
 void fun1 (int global_index)
-{
+{ 
   int a=0, b=0;
 read_network();
   for (a=0; a<10; ++a) { 
