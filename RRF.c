@@ -181,7 +181,7 @@ void mythread_exit() {
     activator arguments have changed, so we have to include the current thread on the first 
     argument for swapping between current and next process (stated by the scheduler).
   */
-  printf("*** THREAD %i FINISHED : SET CONTEXT OF %i\n", t_state[tid].tid, (*next).tid);
+  printf("*** THREAD %i FINISHED : SET CONTEXT OF %i\n", t_state[tid].tid, next->tid);
   activator(&t_state[tid], next);
 }
 
@@ -228,7 +228,7 @@ TCB* scheduler(){
       TCB *s = dequeue(high_q);
       enable_interrupt();
       /* New current thread ID is the one we have just extracted from queue. */
-      current = (*s).tid;
+      current = s->tid;
       /* Return next thread to be executed. */
       return s;
 
@@ -241,7 +241,7 @@ TCB* scheduler(){
       TCB *s = dequeue(low_q);
       enable_interrupt();
       /* New current thread ID is the one we have just extracted from queue. */
-      current = (*s).tid;
+      current = s->tid;
       /* Return next thread to be executed. */
       return s;
     }
@@ -275,7 +275,7 @@ TCB* scheduler(){
       TCB *s = dequeue(low_q);
       enable_interrupt();
       /* New current thread ID is the one we have just extracted from queue. */
-      current = (*s).tid;
+      current = s->tid;
 
       /* Set the remaining ticks for the next execution to the ones of the quantum slice. */
       t_state[tid].ticks = QUANTUM_TICKS;
@@ -317,9 +317,9 @@ void timer_interrupt(int sig)
         we perform a context switch.
       */
 
-      if(t_state[tid].tid != (*next).tid){
+      if(t_state[tid].tid != next->tid){
         /* Change current thread context to new thread context. */
-        printf("*** SWAPCONTEXT FROM %i to %i\n",t_state[tid].tid,(*next).tid);
+        printf("*** SWAPCONTEXT FROM %i to %i\n",t_state[tid].tid,next->tid);
         activator(&t_state[tid], next);
       }
     }
