@@ -132,7 +132,7 @@ int mythread_create (void (*fun_addr)(),int priority)
   else if(t_state[current].priority == LOW_PRIORITY){
 
       int old = current;
-      current = i;
+      current = i; 
       
       /* Set the remaining ticks for the next execution to the ones of the quantum slice. */
       t_state[old].ticks = QUANTUM_TICKS;
@@ -160,13 +160,20 @@ int mythread_create (void (*fun_addr)(),int priority)
 /* Read network syscall */
 int read_network()
 {
-  int tid = mythread_gettid(); 
+   int tid = mythread_gettid(); 
+  t_state[tid].state = WAITING;
+  disable_interrupt();
+  enqueue(wait_q, &t_state[tid]);
+  enable_interrupt();
   printf("*** THREAD %i READ FROM NETWORK\n",t_state[tid].tid);
+  TCB * s = scheduler();
+  activator(&t_state[tid], s);
+
   return 1;
 }
 
 /* Network interrupt  */
-void network_interrupt(int sig) 
+void network_interrupt(int sig)       
 {
   if(!queue_empty(wait_q)){
 
@@ -174,6 +181,8 @@ void network_interrupt(int sig)
     /* Get the next thread to be wake up. */
     TCB *s = dequeue(wait_q);
     enable_interrupt();
+
+    s->state = INIT;
 
     //Now depending on priority
 
@@ -264,7 +273,7 @@ TCB* scheduler(){
     from INIT (in execution/ready) to FREE and for freeing memory. Since FREE state
     is only adquired in this situation, we have only to check it.
   */
-  if(t_state[tid].state == FREE){
+  if(t_state[tid].state == FREE || t_state[tid].state == IDLE ){
 
     if(!queue_empty(high_q)){
 
@@ -290,6 +299,12 @@ TCB* scheduler(){
       /* Return next thread to be executed. */
       return s;
     }
+
+    else if(!queue_empty(wait_q)){
+      current = idle.tid;
+      return &idle;
+    } 
+    
     /* Otherwise, there are no threads waiting to be executed. */
     else{
       printf("FINISH\n"); 
@@ -311,6 +326,10 @@ TCB* scheduler(){
     If all the ticks were consumed, we have to preempt the current thread
     from the CPU and execute the next one in the waiting queue.
   */
+
+  else if(t_state[tid].state == WAITING){
+
+  }
   else{
     /* To avoid segementation fault error, we just check if the queue is not empty. */
     
