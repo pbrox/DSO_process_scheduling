@@ -203,17 +203,23 @@ void network_interrupt(int sig)
         //In other case we have to make preemption
         int old = current;
         current = s->tid;
-      
-        /* Set the remaining ticks for the next execution to the ones of the quantum slice. */
-        t_state[old].ticks = QUANTUM_TICKS;
-        disable_interrupt();
-        /* Equeue the current process so that it can be executed again. */
-        enqueue(low_q,&t_state[old]);
-        enable_interrupt();
+        TCB * old_tcb;
+      	if(old == -1) old_tcb = &idle;
+      	else{
 
+      		old_tcb = &t_state[old];
+      		t_state[old].ticks = QUANTUM_TICKS;
+      		/* Set the remaining ticks for the next execution to the ones of the quantum slice. */
+       	 	disable_interrupt();
+        	/* Equeue the current process so that it can be executed again. */
+        	enqueue(low_q,&t_state[old]);
+        	enable_interrupt();
+
+
+      	} 
         //printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d\n", t_state[old].tid, t_state[i].tid);
         //Activate the new thread
-        activator(&t_state[old],&t_state[current]);
+        activator(old_tcb,&t_state[current]);
       }
     } 
   }
@@ -271,7 +277,7 @@ TCB* scheduler(){
     from INIT (in execution/ready) to FREE and for freeing memory. Since FREE state
     is only adquired in this situation, we have only to check it.
   */
-  if(t_state[tid].state == FREE || t_state[tid].state == IDLE ){
+  if(t_state[tid].state == FREE || tid == -1 ){
 
     if(!queue_empty(high_q)){
 
@@ -404,7 +410,7 @@ void timer_interrupt(int sig)
   int tid = mythread_gettid();  
   //printf("Thread %d Priority %d Ticks %d\n", t_state[tid].tid, t_state[tid].priority, t_state[tid].ticks);
 
-  if(t_state[tid].state == IDLE){
+  if(tid == -1){
     TCB* next = scheduler();
 
       /* 
@@ -412,10 +418,10 @@ void timer_interrupt(int sig)
         we perform a context switch.
       */
 
-      if(t_state[tid].tid != next->tid){
+      if(next->tid != -1){
         /* Change current thread context to new thread context. */
-        printf("*** SWAPCONTEXT FROM %i to %i\n",t_state[tid].tid,next->tid);
-        activator(&t_state[tid], next);
+        printf("*** SWAPCONTEXTAA FROM %i to %i\n",tid,next->tid);
+        activator(&idle, next);
       }
 
   }
