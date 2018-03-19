@@ -115,7 +115,6 @@ int mythread_create (void (*fun_addr)(),int priority)
   t_state[i].run_env.uc_stack.ss_flags = 0;
   /* The initial quantum for any process is stated in the constant QUANTUM_TICKS */
   t_state[i].ticks = QUANTUM_TICKS;
-  printf("Thread created: %d\n",t_state[i].tid);
 
   makecontext(&t_state[i].run_env, fun_addr, 1); 
 
@@ -204,7 +203,7 @@ void network_interrupt(int sig)
     enable_interrupt();
     s->state = INIT;
 
-    printf("*** THREAD %d READY",(*s)->tid);
+    printf("*** THREAD %d READY\n",s->tid);
 
     /* CASE LOW PRIORITY  */
     if(s->priority == LOW_PRIORITY){
@@ -227,7 +226,7 @@ void network_interrupt(int sig)
       else{
         
         	if(current != -1){ /* Not idle executing. */
-            printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d", current,(*s)->tid);
+            printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d\n", current,s->tid);
         	  t_state[current].ticks = QUANTUM_TICKS;
         	  /* Set the remaining ticks for the next execution to the ones of the quantum slice. */
          	  disable_interrupt();
@@ -455,7 +454,12 @@ void activator(TCB* next){
   int old_id = current;
   current = next->tid;
   /* New current thread ID is the one we have just extracted from queue. */
-  if(t_state[old_id].state == FREE){ 
+  if(old_id == -1){
+    /* Change current thread context to new thread context. */
+    printf("*** SWAPCONTEXT FROM %i to %i\n",old_id,current);
+    swapcontext (&(idle.run_env),&(next->run_env));
+  }
+  else if(t_state[old_id].state == FREE){ 
     /* Set context to new thread given by scheduler. */
     printf("*** THREAD %d FINISHED : SET CONTEXT OF %d\n",old_id, current);
     setcontext (&(next->run_env));  
