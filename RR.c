@@ -37,9 +37,9 @@ static void idle_function(){
 /* Initialize the thread library */
 void init_mythreadlib() {
   int i; 
-  /* Initialize the queue for ready processes */
+  /* Initialize the queue for ready processes. */
   q = queue_new();
-  /* Create context for the idle thread */
+  /* Create context for the idle thread. */
   if(getcontext(&idle.run_env) == -1){
     perror("*** ERROR: getcontext in init_thread_lib");
     exit(-1);
@@ -108,6 +108,7 @@ int mythread_create (void (*fun_addr)(),int priority)
   disable_interrupt();
   enqueue(q,&t_state[i]);
   enable_interrupt();
+
   makecontext(&t_state[i].run_env, fun_addr, 1); 
   return i;
 } /****** End my_thread_create() ******/
@@ -115,8 +116,6 @@ int mythread_create (void (*fun_addr)(),int priority)
 /* Read network syscall */
 int read_network()
 {
-  int tid = mythread_gettid(); 
-  printf("*** THREAD %i READ FROM NETWORK\n",t_state[tid].tid);
   return 1;
 }
 
@@ -136,9 +135,10 @@ void mythread_exit() {
 
   TCB* next = scheduler();
   /* 
-    activator arguments have changed, so we have to include the current thread on the first 
+    activator() arguments have changed, so we have to include the current thread on the first 
     argument for swapping between current and next process (stated by the scheduler).
   */
+  printf("*** THREAD %d FINISHED : SET CONTEXT OF %d\n",tid, (*next).tid);
   activator(&t_state[tid], next);
 }
 
@@ -162,7 +162,6 @@ int mythread_gettid(){
 }
 
 
-/* FIFO para alta prioridad, RR para baja*/
 TCB* scheduler(){
   /* We first get the id of the current thread, so that we can work with it */
   int tid = mythread_gettid();
@@ -177,8 +176,8 @@ TCB* scheduler(){
     is only adquired in this situation, we have only to check it.
   */
   if(t_state[tid].state == FREE){
+
     /* To avoid segementation fault error, we just check if the queue is not empty. */
-    
     if(!queue_empty(q)){
       disable_interrupt();
       /* Get the next thread to be executed. */
@@ -189,10 +188,12 @@ TCB* scheduler(){
       /* Return next thread to be executed. */
       return s;
     }
-    /* Otherwise, there are no threads waiting to be executed. */
+    /* Otherwise, there are no threads ready to be executed. */
     else{
-      t_state[tid].ticks = QUANTUM_TICKS;
-      return &t_state[tid];
+      /* Otherwise, there are no threads ready to be executed. */
+      printf("FINISH\n"); 
+      /* Leave the program. */
+      exit(1);
     }
   }
 
@@ -205,8 +206,8 @@ TCB* scheduler(){
   */
   
   else{
+
     /* To avoid segementation fault error, we just check if the queue is not empty. */
-    
     if(!queue_empty(q)){
       disable_interrupt();
       /* Get the next thread to be executed. */
@@ -225,10 +226,13 @@ TCB* scheduler(){
       return s;
     }
     else{
-      /* Otherwise, there are no threads waiting to be executed. */
-      printf("FINISH\n"); 
-      /* Leave the program. */
-      exit(1);
+    	/* 
+    		If the queue is empty, but the scheduler has been called due to quantum
+    		slide to have been finished, just reset the quantum slices and return the 
+    		current thread.
+    	*/
+     	 t_state[tid].ticks = QUANTUM_TICKS;
+     	 return &t_state[tid];
     }
   }
 }
@@ -252,9 +256,9 @@ void timer_interrupt(int sig)
     	we perform a context switch.
  	 */
   	if(t_state[tid].tid != next->tid){
-    /* Change current thread context to new thread context. */
-    printf("*** SWAPCONTEXT FROM %i to %i\n",t_state[tid].tid,next->tid);
-    activator(&t_state[tid], next);
+    	/* Change current thread context to new thread context. */
+    	printf("*** SWAPCONTEXT FROM %i to %i\n",t_state[tid].tid,next->tid);
+    	activator(&t_state[tid], next);
 	}
   }
   
