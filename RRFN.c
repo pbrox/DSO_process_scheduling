@@ -138,8 +138,8 @@ int mythread_create (void (*fun_addr)(),int priority)
     - 2.1 There is a low priority thread running (and therefore, no high priority
     threads are available for execution), so you have to preempt it from the CPU 
     and put this new thread in execution.
-    - 2.2 There is a high priority thread running, so you only have to enqueue
-    it into the high priority ready queue.
+    - 2.2 There is a high priority thread running (or the idle process), so you only 
+    have to enqueue it into the high priority ready queue.
   */
 
   /* -- CASE 2.1 -- */
@@ -175,9 +175,16 @@ int mythread_create (void (*fun_addr)(),int priority)
 /* Read network syscall */
 int read_network()
 {
-  int tid = mythread_gettid();
-  t_state[tid].state = WAITING;
+  /*
+	If the current thread reads from network, it must be preempted, so that
+	it is enqueued in the waiting queue, waiting for a network interrupt to
+	be ready.
+  */
+  int tid = mythread_gettid(); /* Get current thread ID. */
+  t_state[tid].state = WAITING; /* Change state from INIT to WAITING. */
   printf("*** THREAD %i READ FROM NETWORK\n",t_state[tid].tid);
+
+  /* Get next thread to be executed. */
   TCB * s = scheduler();
   activator(&t_state[tid], s);
 

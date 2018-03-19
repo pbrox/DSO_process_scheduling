@@ -134,7 +134,7 @@ int mythread_create (void (*fun_addr)(),int priority)
     - 2.1 There is a low priority thread running (and therefore, no high priority
     threads are available for execution), so you have to preempt it from the CPU 
     and put this new thread in execution.
-    - 2.2 There is a high priority thread running (or the idle process), so you only 
+    - 2.2 There is a high priority thread running, so you only 
     have to enqueue it into the high priority ready queue.
   */
 
