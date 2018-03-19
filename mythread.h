@@ -7,7 +7,7 @@
 
 #include "interrupt.h"
 
-#define N 125
+#define N 10
 #define FREE 0
 #define INIT 1
 #define WAITING 2
