@@ -87,6 +87,303 @@ int main(int argc, char *argv[])
     printf("thread failed to initialize\n");
     exit(-1);
   }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+
+      if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((l = mythread_create(fun1,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+
+  if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+
+      if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+       if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((l = mythread_create(fun1,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+
+  if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+
+      if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((l = mythread_create(fun1,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+
+  if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+
+      if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+    if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+     if((m = mythread_create(fun2,HIGH_PRIORITY)) == -1){
+    printf("thread failed to initialize\n");
+    exit(-1);
+  }
+
+
+
       
      
   for (a=0; a<10; ++a) {
