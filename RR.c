@@ -112,6 +112,8 @@ int mythread_create (void (*fun_addr)(),int priority)
   enqueue(q,&t_state[i]);
   enable_interrupt();
 
+  printf("Created thread %d\n", i);
+
   return i;
 } /****** End my_thread_create() ******/
 
@@ -141,7 +143,7 @@ void mythread_exit() {
     argument for swapping between current and next process (stated by the scheduler).
   */
   printf("*** THREAD %d FINISHED : SET CONTEXT OF %d\n",tid, (*next).tid);
-  activator(&t_state[tid], next);
+  activator(next);
 }
 
 /* Sets the priority of the calling thread */
@@ -185,8 +187,6 @@ TCB* scheduler(){
       /* Get the next thread to be executed. */
       TCB *s = dequeue(q);
       enable_interrupt();
-      /* New current thread ID is the one we have just extracted from queue. */
-      current = s->tid;
       /* Return next thread to be executed. */
       return s;
     }
@@ -215,8 +215,6 @@ TCB* scheduler(){
       /* Get the next thread to be executed. */
       TCB *s = dequeue(q);
       enable_interrupt();
-      /* New current thread ID is the one we have just extracted from queue. */
-      current = s->tid;
 
       /* Set the remaining ticks for the next execution to the ones of the quantum slice. */
       t_state[tid].ticks = QUANTUM_TICKS;
@@ -247,6 +245,8 @@ void timer_interrupt(int sig)
   int tid = mythread_gettid();  
   /* Update the ticks. */
   t_state[tid].ticks -= 1;
+    printf("ticks %d\n", t_state[tid].ticks);
+
 
   /* In case the quantum was consumed. */
   if(t_state[tid].ticks == 0){
@@ -260,17 +260,22 @@ void timer_interrupt(int sig)
   	if(t_state[tid].tid != next->tid){
     	/* Change current thread context to new thread context. */
     	printf("*** SWAPCONTEXT FROM %i to %i\n",t_state[tid].tid,next->tid);
-    	activator(&t_state[tid], next);
+    	activator(next);
 	}
   }
   
 } 
 
 /* Activator */
-void activator(TCB* old, TCB* next){
+void activator(TCB* next){
   /* Execute context switch. */
-  swapcontext (&(old->run_env),&(next->run_env));
-  //printf("mythread_free: After setcontext, should never get here!!...\n");  
+  int old_id = current;
+  current = next->tid;
+  /* New current thread ID is the one we have just extracted from queue. */
+  if(t_state[current].state == FREE) setcontext (&(next->run_env));
+  else  swapcontext (&(t_state[old_id].run_env),&(next->run_env));
+  
+  printf("mythread_free: After setcontext, should never get here!!...\n");  
 }
 
 
