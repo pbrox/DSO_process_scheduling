@@ -138,15 +138,12 @@ int mythread_create (void (*fun_addr)(),int priority)
     - 2.1 There is a low priority thread running (and therefore, no high priority
     threads are available for execution), so you have to preempt it from the CPU 
     and put this new thread in execution.
-    - 2.2 There is a high priority thread running (or the idle process), so you only 
+    - 2.2 There is a high priority thread running, so we only 
     have to enqueue it into the high priority ready queue.
   */
 
   /* -- CASE 2.1 -- */
   else if(t_state[current].priority == LOW_PRIORITY){
-
-      //int old = current; /* Get current thread ID. */
-      //current = i; /* Set new current ID to the one of the newly created thread. */
       
       /* Set the remaining ticks for the next execution to the ones of the quantum slice. */
       t_state[current].ticks = QUANTUM_TICKS;
@@ -195,48 +192,50 @@ int read_network()
 /* ESTO SE PUEDE IMPLEMENTAR DE DOS MANERAS (PREEMPTION, SCHEDUKER) */
 void network_interrupt(int sig)       
 {
+  /* 
+    When a network interrupt comes, it is only effective
+    if there are threads on the waiting queue.
+  */
   if(!queue_empty(wait_q)){
 
     disable_interrupt();
-    /* Get the next thread to be wake up. */
+    /* Get the next thread to be woken up. */
     TCB *s = dequeue(wait_q);
     enable_interrupt();
-    printf("Network interrupt: %d\n",(*s).tid);
     s->state = INIT;
 
-    //Now depending on priority
+    printf("*** THREAD %d READY",(*s)->tid);
 
+    /* CASE LOW PRIORITY  */
     if(s->priority == LOW_PRIORITY){
-      //If it is low priority just insert inside its queue
-    	printf("Enqueue low priority: %d\n",(*s).tid);
+      /* Enqueue into low priority queue. */
       disable_interrupt();
       enqueue(low_q,s);
       enable_interrupt();
     }
+    /* CASE HIGH PRIORITY */
     else{
 
-      //If it is hihg priority and there is currently another hp
+      /* Case another high priority thread is executing. */
       if(t_state[current].priority == HIGH_PRIORITY){
-      	printf("Enqueue high priority: %d\n",(*s).tid);
+        /* Enqueue into high priority queue. */
         disable_interrupt();
         enqueue(high_q,s);
         enable_interrupt();
       }
-
+      /* Case a low priority queu is executing: preemption. */
       else{
-        //In other case we have to make preemption
-        printf("Preemption from %d to %d\n",current,(*s).tid);
-        	if(current != -1){
-        	t_state[current].ticks = QUANTUM_TICKS;
-        	/* Set the remaining ticks for the next execution to the ones of the quantum slice. */
-         	disable_interrupt();
-          /* Equeue the current process so that it can be executed again. */
-          enqueue(low_q,&t_state[current]);
-          enable_interrupt();
-      }
+        
+        	if(current != -1){ /* Not idle executing. */
+            printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d", current,(*s)->tid);
+        	  t_state[current].ticks = QUANTUM_TICKS;
+        	  /* Set the remaining ticks for the next execution to the ones of the quantum slice. */
+         	  disable_interrupt();
+            /* Equeue the current process so that it can be executed again. */
+            enqueue(low_q,&t_state[current]);
+            enable_interrupt();
+          }
       	
-        //printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d\n", t_state[old].tid, t_state[i].tid);
-        //Activate the new thread
         activator(s);
       }
     } 
@@ -253,11 +252,7 @@ void mythread_exit() {
   free(t_state[tid].run_env.uc_stack.ss_sp); 
 
   TCB* next = scheduler();
-  /* 
-    activator arguments have changed, so we have to include the current thread on the first 
-    argument for swapping between current and next process (stated by the scheduler).
-  */
-  //printf("*** THREAD %i FINISHED : SET CONTEXT OF %i\n", t_state[tid].tid, next)->tid;
+
   activator(next);
 }
 
@@ -287,7 +282,7 @@ TCB* scheduler(){
   int tid = mythread_gettid();
 
   /* 
-    FIRST CASE: Thread finished execution.
+    FIRST CASE: Thread finished execution / idle.
 
     We execute this condition inside the scheduler when the thread calls
     mythread_exit(), which occurs when the thread has finished its execution.
@@ -295,8 +290,9 @@ TCB* scheduler(){
     from INIT (in execution/ready) to FREE and for freeing memory. Since FREE state
     is only adquired in this situation, we have only to check it.
   */
-  if(t_state[tid].state == FREE || tid == -1 ){
+  if(t_state[tid].state == FREE || tid == -1){
 
+    /* Check if there are high priority threads available. */
     if(!queue_empty(high_q)){
 
       disable_interrupt();
@@ -307,8 +303,8 @@ TCB* scheduler(){
       return s;
 
     }
-    /* To avoid segementation fault error, we just check if the queue is not empty. */
-    
+
+    /* Check if there are low priority threads available. */
     else if(!queue_empty(low_q)){
       disable_interrupt();
       /* Get the next thread to be executed. */
@@ -317,7 +313,7 @@ TCB* scheduler(){
       /* Return next thread to be executed. */
       return s;
     }
-
+    /* No high nor low available, but some threds waiting -> idle */
     else if(!queue_empty(wait_q)) return &idle;
 
     /* Otherwise, there are no threads waiting to be executed. */
@@ -328,12 +324,15 @@ TCB* scheduler(){
     }
   }
 
-  //Este caso significa que lo vamos a meter en la cola de waiting
-
+  /* 
+    SECOND CASE: Current process has changed to waiting state
+    (network call)
+  */
   else if(t_state[tid].state == WAITING){
 
     TCB * next;
 
+    /* Check if there are high priority threads available. */
     if(!queue_empty(high_q)){
 
       disable_interrupt();
@@ -342,8 +341,8 @@ TCB* scheduler(){
       enable_interrupt();
 
     }
-    /* To avoid segementation fault error, we just check if the queue is not empty. */
-    
+
+    /* Check if there are low priority threads available. */
     else if(!queue_empty(low_q)){
       disable_interrupt();
       /* Get the next thread to be executed. */
@@ -354,7 +353,8 @@ TCB* scheduler(){
 
     }
 
-    else next = &idle;
+    /* No more processes ready (all waiting) -> idle */
+    else next = &idle; 
 
     disable_interrupt();
     enqueue(wait_q, &t_state[tid]);
@@ -365,22 +365,20 @@ TCB* scheduler(){
   }
 
   /*
-    SECOND CASE: Clock interrupt.
+    THIRD CASE: Clock interrupt.
 
     We execute this condition inside the scheduler when a clock interruption
-    happens, from timer_interrupt(). That means that a tick has been 
-    consumed from the previous call to the scheduler, and, therefore, the
-    remaining ticks on the CPU for the current thread are reduced by one.
-  */
-  
-  /* 
-    If all the ticks were consumed, we have to preempt the current thread
-    from the CPU and execute the next one in the waiting queue.
+    happens, in case all the ticks were consumed; only if the current thread 
+    in execution is low priority, since high priority queues are executed using 
+    FIFO policy.
+
+    Thus, we change the current low priority thread to the first thread from
+    the low priority queue.
   */
 
   else{
-    /* To avoid segementation fault error, we just check if the queue is not empty. */
     
+    /* Check if there are low priority threads available. */
     if(!queue_empty(low_q)){
       disable_interrupt();
       /* Get the next thread to be executed. */
@@ -396,6 +394,7 @@ TCB* scheduler(){
       /* Return next thread to be executed. */
       return s;
     }
+    /* Otherwise, only the current thread is available. */
     else{
       t_state[tid].ticks = QUANTUM_TICKS;
       return &t_state[tid];
@@ -411,16 +410,14 @@ void timer_interrupt(int sig)
 
   /* Get current thread ID. */
   int tid = mythread_gettid();  
-  //printf("Thread %d Priority %d Ticks %d\n", t_state[tid].tid, t_state[tid].priority, t_state[tid].ticks);
 
-  if(tid == -1){
-    TCB* next = scheduler();
+  if(tid == -1){ /* idle process */
+    TCB* next = scheduler(); /* Get next thread*/
 
       /* 
        In case we have changed the thread to be executed in the next tick,
         we perform a context switch.
       */
-
       if(next->tid != -1){
         /* Change current thread context to new thread context. */
         printf("*** SWAPCONTEXT FROM %i to %i\n",tid,next->tid);
@@ -428,7 +425,7 @@ void timer_interrupt(int sig)
       }
 
   }
-
+  /* Case low priority, since they are the only ones using Round Robin. */
   else if (t_state[tid].priority == LOW_PRIORITY){
     /* Update the ticks. */
      t_state[tid].ticks -= 1; 
@@ -459,7 +456,8 @@ void activator(TCB* next){
   current = next->tid;
   /* New current thread ID is the one we have just extracted from queue. */
   if(t_state[old_id].state == FREE){ 
-
+    /* Set context to new thread given by scheduler. */
+    printf("*** THREAD %d FINISHED : SET CONTEXT OF %d\n",old_id, current);
     setcontext (&(next->run_env));  
     printf("mythread_free: After setcontext, should never get here!!...\n");  
   }

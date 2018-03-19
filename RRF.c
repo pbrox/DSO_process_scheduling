@@ -132,7 +132,7 @@ int mythread_create (void (*fun_addr)(),int priority)
     The newly created thread is high priority.
     In here we can distinguish two cases:
     - 2.1 There is a low priority thread running (and therefore, no high priority
-    threads are available for execution), so you have to preempt it from the CPU 
+    threads are available for execution), so we have to preempt it from the CPU 
     and put this new thread in execution.
     - 2.2 There is a high priority thread running, so you only 
     have to enqueue it into the high priority ready queue.
@@ -188,11 +188,7 @@ void mythread_exit() {
   free(t_state[tid].run_env.uc_stack.ss_sp); 
 
   TCB* next = scheduler();
-  /* 
-    activator() arguments have changed, so we have to include the current thread on the first 
-    argument for swapping between current and next process (stated by the scheduler).
-  */
-  printf("*** THREAD %i FINISHED : SET CONTEXT OF %i\n", t_state[tid].tid, next->tid);
+  
   activator(next);
 }
 
@@ -272,8 +268,9 @@ TCB* scheduler(){
     CASE 2: Clock interrupt.
 
     We execute this condition inside the scheduler when a clock interruption
-    happens, from timer_interrupt(); only if the current thread in execution is
-    low priority, since high priority queues are executed using FIFO policy.
+    happens, in case all the ticks were consumed; only if the current thread 
+    in execution is low priority, since high priority queues are executed using 
+    FIFO policy.
 
     Thus, we change the current low priority thread to the first thread from
     the low priority queue.
@@ -351,8 +348,9 @@ void activator(TCB* next){
   /* New current thread ID is the one we have just extracted from queue. */
   if(t_state[old_id].state == FREE){ 
 
-    setcontext (&(next->run_env));  
-    printf("mythread_free: After setcontext, should never get here!!...\n");  
+    /* Set context to new thread given by scheduler. */
+    printf("*** THREAD %d FINISHED : SET CONTEXT OF %d\n",old_id, current);
+    setcontext (&(next->run_env)); 
   }
   else  swapcontext (&(t_state[old_id].run_env),&(next->run_env));
   
