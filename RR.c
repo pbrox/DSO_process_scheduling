@@ -112,8 +112,6 @@ int mythread_create (void (*fun_addr)(),int priority)
   enqueue(q,&t_state[i]);
   enable_interrupt();
 
-  printf("Created thread %d\n", i);
-
   return i;
 } /****** End my_thread_create() ******/
 
@@ -138,11 +136,7 @@ void mythread_exit() {
   free(t_state[tid].run_env.uc_stack.ss_sp); 
 
   TCB* next = scheduler();
-  /* 
-    activator() arguments have changed, so we have to include the current thread on the first 
-    argument for swapping between current and next process (stated by the scheduler).
-  */
-  printf("*** THREAD %d FINISHED : SET CONTEXT OF %d\n",tid, (*next).tid);
+
   activator(next);
 }
 
@@ -256,8 +250,6 @@ void timer_interrupt(int sig)
     	we perform a context switch.
  	 */
   	if(t_state[tid].tid != next->tid){
-    	/* Change current thread context to new thread context. */
-    	printf("*** SWAPCONTEXT FROM %i to %i\n",t_state[tid].tid,next->tid);
     	activator(next);
 	}
   }
@@ -266,16 +258,24 @@ void timer_interrupt(int sig)
 
 /* Activator */
 void activator(TCB* next){
-  /* Execute context switch. */
-  int old_id = current;
-  current = next->tid;
-  /* New current thread ID is the one we have just extracted from queue. */
+  
+  int old_id = current; /* Get current ID. */
+  current = next->tid; /* Change current ID from the one given by scheduler. */
+
+  /* If the change of context is due to thread finalisation. */
   if(t_state[old_id].state == FREE){ 
 
-    setcontext (&(next->run_env));  
+    /* Set context to new thread given by scheduler. */
+    printf("*** THREAD %d FINISHED : SET CONTEXT OF %d\n",old_id, current);
+    setcontext (&(next->run_env)); 
+
     printf("mythread_free: After setcontext, should never get here!!...\n");  
   }
-  else  swapcontext (&(t_state[old_id].run_env),&(next->run_env));
+  else{
+    /* Change current thread context to new thread context. */
+    printf("*** SWAPCONTEXT FROM %i to %i\n",old_id,current);
+    swapcontext (&(t_state[old_id].run_env),&(next->run_env));
+    }
   
  
 }
