@@ -141,18 +141,18 @@ int mythread_create (void (*fun_addr)(),int priority)
   /* -- CASE 2.1 -- */
   else if(t_state[current].priority == LOW_PRIORITY){
 
-      int old = current; /* Get current thread ID. */
-      current = i; /* Set new current ID to the one of the newly created thread. */
+      //int old = current; /* Get current thread ID. */
+      //current = i; /* Set new current ID to the one of the newly created thread. */
       
       /* Set the remaining ticks for the next execution to the ones of the quantum slice. */
-      t_state[old].ticks = QUANTUM_TICKS;
+      t_state[current].ticks = QUANTUM_TICKS;
       disable_interrupt();
       /* Equeue the current process so that it can be executed again. */
-      enqueue(low_q,&t_state[old]);
+      enqueue(low_q,&t_state[current]);
       enable_interrupt();
 
-      printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d\n", t_state[old].tid, t_state[i].tid);
-      activator(&t_state[old],&t_state[current]);
+      printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d\n", t_state[current].tid, t_state[i].tid);
+      activator(&t_state[i]);
   } 
   /* -- CASE 2.2 -- */
   else{
@@ -193,7 +193,7 @@ void mythread_exit() {
     argument for swapping between current and next process (stated by the scheduler).
   */
   printf("*** THREAD %i FINISHED : SET CONTEXT OF %i\n", t_state[tid].tid, next->tid);
-  activator(&t_state[tid], next);
+  activator(next);
 }
 
 /* Sets the priority of the calling thread */
@@ -242,8 +242,6 @@ TCB* scheduler(){
       /* Get the next high priority thread to be executed. */
       TCB *s = dequeue(high_q);
       enable_interrupt();
-      /* New current thread ID is the one we have just extracted from queue. */
-      current = s->tid;
       /* Return next thread to be executed. */
       return s;
 
@@ -259,8 +257,6 @@ TCB* scheduler(){
       /* Get the next low priority thread to be executed. */
       TCB *s = dequeue(low_q);
       enable_interrupt();
-      /* New current thread ID is the one we have just extracted from queue. */
-      current = s->tid;
       /* Return next thread to be executed. */
       return s;
     }
@@ -290,8 +286,6 @@ TCB* scheduler(){
       /* Get the next thread to be executed. */
       TCB *s = dequeue(low_q);
       enable_interrupt();
-      /* New current thread ID is the one we have just extracted from queue. */
-      current = s->tid;
 
       /* Set the remaining ticks for the next execution to the ones of the quantum slice. */
       t_state[tid].ticks = QUANTUM_TICKS;
@@ -343,18 +337,28 @@ void timer_interrupt(int sig)
       if(t_state[tid].tid != next->tid){
         /* Change current thread context to new thread context. */
         printf("*** SWAPCONTEXT FROM %i to %i\n",t_state[tid].tid,next->tid);
-        activator(&t_state[tid], next);
+        activator(next);
       }
     }
   }
 } 
 
 /* Activator */
-void activator(TCB* old, TCB* next){
+void activator(TCB* next){
   /* Execute context switch. */
-  swapcontext (&(old->run_env),&(next->run_env));
-  //printf("mythread_free: After setcontext, should never get here!!...\n");  
+  int old_id = current;
+  current = next->tid;
+  /* New current thread ID is the one we have just extracted from queue. */
+  if(t_state[old_id].state == FREE){ 
+
+    setcontext (&(next->run_env));  
+    printf("mythread_free: After setcontext, should never get here!!...\n");  
+  }
+  else  swapcontext (&(t_state[old_id].run_env),&(next->run_env));
+  
+ 
 }
+
 
 
 

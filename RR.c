@@ -245,8 +245,6 @@ void timer_interrupt(int sig)
   int tid = mythread_gettid();  
   /* Update the ticks. */
   t_state[tid].ticks -= 1;
-   printf("ticks %d\n", t_state[tid].ticks);
-
 
   /* In case the quantum was consumed. */
   if(t_state[tid].ticks == 0){
@@ -272,7 +270,7 @@ void activator(TCB* next){
   int old_id = current;
   current = next->tid;
   /* New current thread ID is the one we have just extracted from queue. */
-  if(t_state[current].state == FREE){ 
+  if(t_state[old_id].state == FREE){ 
 
     setcontext (&(next->run_env));  
     printf("mythread_free: After setcontext, should never get here!!...\n");  
