@@ -503,7 +503,6 @@ void activator(TCB* next){
   /* New current thread ID is the one we have just extracted from queue. */
   if(old_id == -1){
     /* Change current thread context to new thread context. */
-    printf("*** SWAPCONTEXT FROM %i to %i\n",old_id,current);
     if(swapcontext (&(idle.run_env),&(next->run_env))){
       perror("*** ERROR: swapcontext in activator");
       exit(-1);
