@@ -127,7 +127,10 @@ int mythread_create (void (*fun_addr)(),int priority)
 
     disable_interrupt();
     /* Insert the thread in the queue */
-    enqueue(low_q,&t_state[i]); 
+    if(enqueue(low_q,&t_state[i])==NULL){
+      perror("*** ERROR: enqueue in my_thread_create");
+      exit(-1);
+    }
     enable_interrupt();
   } 
   /* 
@@ -148,7 +151,10 @@ int mythread_create (void (*fun_addr)(),int priority)
       t_state[current].ticks = QUANTUM_TICKS;
       disable_interrupt();
       /* Equeue the current process so that it can be executed again. */
-      enqueue(low_q,&t_state[current]);
+      if(enqueue(low_q,&t_state[current])==NULL){
+        perror("*** ERROR: enqueue in my_thread_create");
+        exit(-1);
+      }
       enable_interrupt();
 
       printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d\n", t_state[current].tid, t_state[i].tid);
@@ -159,7 +165,10 @@ int mythread_create (void (*fun_addr)(),int priority)
     
     disable_interrupt();
     /* Enqueue current thread into the ready queue. */
-    enqueue(high_q, &t_state[i]);
+    if(enqueue(high_q, &t_state[i])==NULL){
+      perror("*** ERROR: enqueue in my_thread_create");
+      exit(-1);
+    }
     enable_interrupt();
 
 
@@ -188,7 +197,6 @@ int read_network()
 }
 
 /* Network interrupt  */
-/* ESTO SE PUEDE IMPLEMENTAR DE DOS MANERAS (PREEMPTION, SCHEDUKER) */
 void network_interrupt(int sig)       
 {
   /* 
@@ -200,6 +208,10 @@ void network_interrupt(int sig)
     disable_interrupt();
     /* Get the next thread to be woken up. */
     TCB *s = dequeue(wait_q);
+    if(s == NULL){
+      perror("*** ERROR: dequeue in network_interrupt");
+      exit(-1);
+    }
     enable_interrupt();
     s->state = INIT;
 
@@ -209,7 +221,10 @@ void network_interrupt(int sig)
     if(s->priority == LOW_PRIORITY){
       /* Enqueue into low priority queue. */
       disable_interrupt();
-      enqueue(low_q,s);
+      if(enqueue(low_q,s)==NULL){
+        perror("*** ERROR: enqueue in network_interrupt");
+        exit(-1);
+      }
       enable_interrupt();
     }
     /* CASE HIGH PRIORITY */
@@ -219,7 +234,10 @@ void network_interrupt(int sig)
       if(t_state[current].priority == HIGH_PRIORITY){
         /* Enqueue into high priority queue. */
         disable_interrupt();
-        enqueue(high_q,s);
+        if(enqueue(high_q,s)==NULL){
+          perror("*** ERROR: enqueue in network_interrupt");
+          exit(-1);
+        }
         enable_interrupt();
       }
       /* Case a low priority queu is executing: preemption. */
@@ -231,7 +249,10 @@ void network_interrupt(int sig)
         	  /* Set the remaining ticks for the next execution to the ones of the quantum slice. */
          	  disable_interrupt();
             /* Equeue the current process so that it can be executed again. */
-            enqueue(low_q,&t_state[current]);
+            if(enqueue(low_q,&t_state[current])==NULL){
+              perror("*** ERROR: enqueue in network_interrupt");
+              exit(-1);
+            }
             enable_interrupt();
           }
       	
@@ -297,6 +318,10 @@ TCB* scheduler(){
       disable_interrupt();
       /* Get the next thread to be executed. */
       TCB *s = dequeue(high_q);
+      if(s == NULL){
+        perror("*** ERROR: dequeue in scheduler");
+        exit(-1);
+      }
       enable_interrupt();
       /* Return next thread to be executed. */
       return s;
@@ -308,6 +333,10 @@ TCB* scheduler(){
       disable_interrupt();
       /* Get the next thread to be executed. */
       TCB *s = dequeue(low_q);
+      if(s == NULL){
+        perror("*** ERROR: dequeue in scheduler");
+        exit(-1);
+      }
       enable_interrupt();
       /* Return next thread to be executed. */
       return s;
@@ -337,6 +366,10 @@ TCB* scheduler(){
       disable_interrupt();
       /* Get the next thread to be executed. */
       next = dequeue(high_q);
+      if(next == NULL){
+        perror("*** ERROR: dequeue in scheduler");
+        exit(-1);
+      }
       enable_interrupt();
 
     }
@@ -346,6 +379,10 @@ TCB* scheduler(){
       disable_interrupt();
       /* Get the next thread to be executed. */
       next = dequeue(low_q);
+      if(next == NULL){
+        perror("*** ERROR: dequeue in scheduler");
+        exit(-1);
+      }
       enable_interrupt();
       /* New current thread ID is the one we have just extracted from queue. */
       t_state[tid].ticks = QUANTUM_TICKS;
@@ -356,7 +393,10 @@ TCB* scheduler(){
     else next = &idle; 
 
     disable_interrupt();
-    enqueue(wait_q, &t_state[tid]);
+    if(enqueue(wait_q, &t_state[tid])==NULL){
+      perror("*** ERROR: enqueue in scheduler");
+      exit(-1);
+    }
     enable_interrupt();
 
     return next;
@@ -382,13 +422,20 @@ TCB* scheduler(){
       disable_interrupt();
       /* Get the next thread to be executed. */
       TCB *s = dequeue(low_q);
+      if(s == NULL){
+        perror("*** ERROR: dequeue in scheduler");
+        exit(-1);
+      }
       enable_interrupt();
 
       /* Set the remaining ticks for the next execution to the ones of the quantum slice. */
       t_state[tid].ticks = QUANTUM_TICKS;
       disable_interrupt();
       /* Equeue the current process so that it can be executed again. */
-      enqueue(low_q,&t_state[tid]);
+      if(enqueue(low_q,&t_state[tid])==NULL){
+        perror("*** ERROR: enqueue in scheduler");
+        exit(-1);
+      }
       enable_interrupt();
       /* Return next thread to be executed. */
       return s;
@@ -457,12 +504,18 @@ void activator(TCB* next){
   if(old_id == -1){
     /* Change current thread context to new thread context. */
     printf("*** SWAPCONTEXT FROM %i to %i\n",old_id,current);
-    swapcontext (&(idle.run_env),&(next->run_env));
+    if(swapcontext (&(idle.run_env),&(next->run_env))){
+      perror("*** ERROR: swapcontext in activator");
+      exit(-1);
+    }
   }
   else if(t_state[old_id].state == FREE){ 
     /* Set context to new thread given by scheduler. */
     printf("*** THREAD %d FINISHED : SET CONTEXT OF %d\n",old_id, current);
-    setcontext (&(next->run_env));  
+    if(setcontext (&(next->run_env))){
+      perror("*** ERROR: setcontext in activator");
+      exit(-1);
+    }  
     printf("mythread_free: After setcontext, should never get here!!...\n");  
   }
   else  swapcontext (&(t_state[old_id].run_env),&(next->run_env));

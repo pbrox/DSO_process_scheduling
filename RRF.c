@@ -124,7 +124,10 @@ int mythread_create (void (*fun_addr)(),int priority)
 
     disable_interrupt();
     /* Insert the thread in the queue */
-    enqueue(low_q,&t_state[i]); 
+    if(enqueue(low_q,&t_state[i])==NULL){
+      perror("*** ERROR: enqueue in my_thread_create");
+      exit(-1);
+    } 
     enable_interrupt();
   } 
   /* 
@@ -148,7 +151,10 @@ int mythread_create (void (*fun_addr)(),int priority)
       t_state[current].ticks = QUANTUM_TICKS;
       disable_interrupt();
       /* Equeue the current process so that it can be executed again. */
-      enqueue(low_q,&t_state[current]);
+      if(enqueue(low_q,&t_state[current])==NULL){
+        perror("*** ERROR: enqueue in my_thread_create");
+        exit(-1);
+      }
       enable_interrupt();
 
       printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d\n", t_state[current].tid, t_state[i].tid);
@@ -159,7 +165,10 @@ int mythread_create (void (*fun_addr)(),int priority)
     
     disable_interrupt();
     /* Enqueue current thread into the ready queue. */
-    enqueue(high_q, &t_state[i]);
+    if(enqueue(high_q, &t_state[i])==NULL){
+      perror("*** ERROR: enqueue in my_thread_create");
+      exit(-1);
+    }
     enable_interrupt();
 
   }
@@ -237,6 +246,10 @@ TCB* scheduler(){
       disable_interrupt();
       /* Get the next high priority thread to be executed. */
       TCB *s = dequeue(high_q);
+      if(s==NULL){
+        perror("*** ERROR: dequeue in scheduler");
+        exit(-1);
+      }
       enable_interrupt();
       /* Return next thread to be executed. */
       return s;
@@ -252,6 +265,10 @@ TCB* scheduler(){
       disable_interrupt();
       /* Get the next low priority thread to be executed. */
       TCB *s = dequeue(low_q);
+      if(s==NULL){
+        perror("*** ERROR: dequeue in scheduler");
+        exit(-1);
+      }
       enable_interrupt();
       /* Return next thread to be executed. */
       return s;
@@ -282,13 +299,20 @@ TCB* scheduler(){
       disable_interrupt();
       /* Get the next thread to be executed. */
       TCB *s = dequeue(low_q);
+      if(s==NULL){
+        perror("*** ERROR: dequeue in scheduler");
+        exit(-1);
+      }
       enable_interrupt();
 
       /* Set the remaining ticks for the next execution to the ones of the quantum slice. */
       t_state[tid].ticks = QUANTUM_TICKS;
       disable_interrupt();
       /* Equeue the current process so that it can be executed again. */
-      enqueue(low_q,&t_state[tid]);
+      if(enqueue(low_q,&t_state[tid])==NULL){
+        perror("*** ERROR: enqueue in scheduler");
+        exit(-1);
+      }
       enable_interrupt();
       /* Return next thread to be executed. */
       return s;
@@ -350,10 +374,17 @@ void activator(TCB* next){
 
     /* Set context to new thread given by scheduler. */
     printf("*** THREAD %d FINISHED : SET CONTEXT OF %d\n",old_id, current);
-    setcontext (&(next->run_env)); 
+    if(setcontext (&(next->run_env))==-1){
+      perror("*** ERROR: setcontext in activator");
+      exit(-1);
+    } 
   }
-  else  swapcontext (&(t_state[old_id].run_env),&(next->run_env));
-  
+  else{ 
+    if(swapcontext (&(t_state[old_id].run_env),&(next->run_env))==-1){
+    perror("*** ERROR: swapcontext in activator");
+    exit(-1);
+  }
+  }
  
 }
 
