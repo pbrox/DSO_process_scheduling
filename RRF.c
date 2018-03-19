@@ -123,7 +123,7 @@ int mythread_create (void (*fun_addr)(),int priority)
   if(priority == LOW_PRIORITY){
 
     disable_interrupt();
-    /* Insert the queue */
+    /* Insert the thread in the queue */
     enqueue(low_q,&t_state[i]); 
     enable_interrupt();
   } 
@@ -134,8 +134,8 @@ int mythread_create (void (*fun_addr)(),int priority)
     - 2.1 There is a low priority thread running (and therefore, no high priority
     threads are available for execution), so you have to preempt it from the CPU 
     and put this new thread in execution.
-    - 2.2 There is a high priority thread running, so you only have to enqueue
-    it into the high priority ready queue.
+    - 2.2 There is a high priority thread running (or the idle process), so you only 
+    have to enqueue it into the high priority ready queue.
   */
 
   /* -- CASE 2.1 -- */
@@ -158,7 +158,7 @@ int mythread_create (void (*fun_addr)(),int priority)
   else{
     
     disable_interrupt();
-    /* Enqueue current thread into the high priority ready queue. */
+    /* Enqueue current thread into the ready queue. */
     enqueue(high_q, &t_state[i]);
     enable_interrupt();
 

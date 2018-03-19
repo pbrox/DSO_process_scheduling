@@ -104,12 +104,14 @@ int mythread_create (void (*fun_addr)(),int priority)
   t_state[i].run_env.uc_stack.ss_flags = 0;
   /* The initial quantum for any process is stated in the constant QUANTUM_TICKS */
   t_state[i].ticks = QUANTUM_TICKS;
+  
+  makecontext(&t_state[i].run_env, fun_addr, 1); 
+
   /* Insert the newly created thread into the queue for threads ready to be executed */
   disable_interrupt();
   enqueue(q,&t_state[i]);
   enable_interrupt();
 
-  makecontext(&t_state[i].run_env, fun_addr, 1); 
   return i;
 } /****** End my_thread_create() ******/
 

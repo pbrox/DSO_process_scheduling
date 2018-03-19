@@ -25,13 +25,13 @@ static int current = 0;
 /* Variable indicating if the library is initialized (init == 1) or not (init == 0) */
 static int init=0;
 
-/*  Low priority queue for threads ready to be executed */
+/*  Low priority queue for threads ready to be executed. */
 struct queue *low_q;
 
-/*  High priority queue for threads ready to be executed */
+/*  High priority queue for threads ready to be executed. */
 struct queue *high_q;
 
-/* Waiting queue for threads calling NIC driver */
+/* Waiting queue for threads calling NIC driver. */
 struct queue *wait_q;
 
 
@@ -44,10 +44,10 @@ static void idle_function(){
 /* Initialize the thread library */
 void init_mythreadlib() {
   int i; 
-  /* Initialize the queues for ready processes */
-  low_q = queue_new();
-  high_q = queue_new();
-  wait_q = queue_new();
+  /* Initialize all the queues. */
+  low_q = queue_new(); /* Low priority queue for ready processes. */
+  high_q = queue_new(); /* High priority queue for ready processes. */
+  wait_q = queue_new(); /* Wait queue for waiting processes. */
 
   /* Create context for the idle thread */
   if(getcontext(&idle.run_env) == -1){
@@ -83,8 +83,6 @@ void init_mythreadlib() {
  
   t_state[0].tid = 0;
   running = &t_state[0];
-  printf("Thread %d Priority %d\n", t_state[0].tid, t_state[0].priority);
-  printf("*** THREAD %i READY\n",t_state[0].tid);
   /* Initialize network and clock interrupts */
   init_network_interrupt();
   init_interrupt();
@@ -117,41 +115,57 @@ int mythread_create (void (*fun_addr)(),int priority)
   t_state[i].run_env.uc_stack.ss_flags = 0;
   /* The initial quantum for any process is stated in the constant QUANTUM_TICKS */
   t_state[i].ticks = QUANTUM_TICKS;
+  printf("Thread created: %d\n",t_state[i].tid);
 
   makecontext(&t_state[i].run_env, fun_addr, 1); 
 
-  printf("Thread %d Priority %d\n", t_state[i].tid, priority);
-
-  /* If it is Low priority, Insert the newly created thread into the low priority queue */
+  /* 
+    CASE 1:
+    The newly created thread is low priority.
+    Therefore, we have just to insert it into the low priority queue.
+  */
   if(priority == LOW_PRIORITY){
 
     disable_interrupt();
+    /* Insert the thread in the queue */
     enqueue(low_q,&t_state[i]); 
     enable_interrupt();
   } 
-  /* If it is high priority and there is a low priority running */
+  /* 
+    CASE 2
+    The newly created thread is high priority.
+    In here we can distinguish two cases:
+    - 2.1 There is a low priority thread running (and therefore, no high priority
+    threads are available for execution), so you have to preempt it from the CPU 
+    and put this new thread in execution.
+    - 2.2 There is a high priority thread running, so you only have to enqueue
+    it into the high priority ready queue.
+  */
+
+  /* -- CASE 2.1 -- */
   else if(t_state[current].priority == LOW_PRIORITY){
 
-      int old = current;
-      current = i; 
+      int old = current; /* Get current thread ID. */
+      current = i; /* Set new current ID to the one of the newly created thread. */
       
       /* Set the remaining ticks for the next execution to the ones of the quantum slice. */
       t_state[old].ticks = QUANTUM_TICKS;
       disable_interrupt();
       /* Equeue the current process so that it can be executed again. */
       enqueue(low_q,&t_state[old]);
-      enable_interrupt(); 
+      enable_interrupt();
 
       printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d\n", t_state[old].tid, t_state[i].tid);
-      //Activate the new thread
       activator(&t_state[old],&t_state[current]);
   } 
-
+  /* -- CASE 2.2 -- */
   else{
     
     disable_interrupt();
+    /* Enqueue current thread into the ready queue. */
     enqueue(high_q, &t_state[i]);
     enable_interrupt();
+
 
   } 
   
@@ -171,6 +185,7 @@ int read_network()
 }
 
 /* Network interrupt  */
+/* ESTO SE PUEDE IMPLEMENTAR DE DOS MANERAS (PREEMPTION, SCHEDUKER) */
 void network_interrupt(int sig)       
 {
   if(!queue_empty(wait_q)){
@@ -179,13 +194,14 @@ void network_interrupt(int sig)
     /* Get the next thread to be wake up. */
     TCB *s = dequeue(wait_q);
     enable_interrupt();
-
+    printf("Network interrupt: %d\n",(*s).tid);
     s->state = INIT;
 
     //Now depending on priority
 
     if(s->priority == LOW_PRIORITY){
       //If it is low priority just insert inside its queue
+    	printf("Enqueue low priority: %d\n",(*s).tid);
       disable_interrupt();
       enqueue(low_q,s);
       enable_interrupt();
@@ -194,6 +210,7 @@ void network_interrupt(int sig)
 
       //If it is hihg priority and there is currently another hp
       if(t_state[current].priority == HIGH_PRIORITY){
+      	printf("Enqueue high priority: %d\n",(*s).tid);
         disable_interrupt();
         enqueue(high_q,s);
         enable_interrupt();
@@ -204,6 +221,7 @@ void network_interrupt(int sig)
         int old = current;
         current = s->tid;
         TCB * old_tcb;
+        printf("Preemption from %d to %d\n",old,(*s).tid);
       	if(old == -1) old_tcb = &idle;
       	else{
 
@@ -420,7 +438,7 @@ void timer_interrupt(int sig)
 
       if(next->tid != -1){
         /* Change current thread context to new thread context. */
-        printf("*** SWAPCONTEXTAA FROM %i to %i\n",tid,next->tid);
+        printf("*** SWAPCONTEXT FROM %i to %i\n",tid,next->tid);
         activator(&idle, next);
       }
 
