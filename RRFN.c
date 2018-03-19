@@ -8,7 +8,7 @@
 #include "mythread.h"
 #include "interrupt.h"
 
-#include "queue.h"
+#include "queue.h" 
 
 TCB* scheduler();
 void activator();
@@ -47,6 +47,7 @@ void init_mythreadlib() {
   /* Initialize the queues for ready processes */
   low_q = queue_new();
   high_q = queue_new();
+  wait_q = queue_new();
 
   /* Create context for the idle thread */
   if(getcontext(&idle.run_env) == -1){
@@ -88,7 +89,7 @@ void init_mythreadlib() {
   init_network_interrupt();
   init_interrupt();
 }
-
+ 
  
 /* Create and intialize a new thread with body fun_addr and one integer argument */ 
 int mythread_create (void (*fun_addr)(),int priority)
@@ -139,7 +140,7 @@ int mythread_create (void (*fun_addr)(),int priority)
       disable_interrupt();
       /* Equeue the current process so that it can be executed again. */
       enqueue(low_q,&t_state[old]);
-      enable_interrupt();
+      enable_interrupt(); 
 
       printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d\n", t_state[old].tid, t_state[i].tid);
       //Activate the new thread
@@ -160,11 +161,8 @@ int mythread_create (void (*fun_addr)(),int priority)
 /* Read network syscall */
 int read_network()
 {
-   int tid = mythread_gettid(); 
+  int tid = mythread_gettid();
   t_state[tid].state = WAITING;
-  disable_interrupt();
-  enqueue(wait_q, &t_state[tid]);
-  enable_interrupt();
   printf("*** THREAD %i READ FROM NETWORK\n",t_state[tid].tid);
   TCB * s = scheduler();
   activator(&t_state[tid], s);
@@ -213,11 +211,11 @@ void network_interrupt(int sig)
         enqueue(low_q,&t_state[old]);
         enable_interrupt();
 
-        printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d\n", t_state[old].tid, t_state[i].tid);
+        //printf("*** THREAD %d PREEMPTED: SET CONTEXT OF %d\n", t_state[old].tid, t_state[i].tid);
         //Activate the new thread
         activator(&t_state[old],&t_state[current]);
       }
-    }
+    } 
   }
 } 
 
@@ -235,7 +233,7 @@ void mythread_exit() {
     activator arguments have changed, so we have to include the current thread on the first 
     argument for swapping between current and next process (stated by the scheduler).
   */
-  printf("*** THREAD %i FINISHED : SET CONTEXT OF %i\n", t_state[tid].tid, next)->tid;
+  //printf("*** THREAD %i FINISHED : SET CONTEXT OF %i\n", t_state[tid].tid, next)->tid;
   activator(&t_state[tid], next);
 }
 
@@ -289,7 +287,7 @@ TCB* scheduler(){
     }
     /* To avoid segementation fault error, we just check if the queue is not empty. */
     
-      else if(!queue_empty(low_q)){
+    else if(!queue_empty(low_q)){
       disable_interrupt();
       /* Get the next thread to be executed. */
       TCB *s = dequeue(low_q);
@@ -304,13 +302,55 @@ TCB* scheduler(){
       current = idle.tid;
       return &idle;
     } 
-    
+
     /* Otherwise, there are no threads waiting to be executed. */
     else{
       printf("FINISH\n"); 
       /* Leave the program. */
       exit(1);
     }
+  }
+
+  //Este caso significa que lo vamos a meter en la cola de waiting
+
+  else if(t_state[tid].state == WAITING){
+
+    TCB * next;
+
+    if(!queue_empty(high_q)){
+
+      disable_interrupt();
+      /* Get the next thread to be executed. */
+      next = dequeue(high_q);
+      enable_interrupt();
+      /* New current thread ID is the one we have just extracted from queue. */
+      current = next->tid;
+
+    }
+    /* To avoid segementation fault error, we just check if the queue is not empty. */
+    
+    else if(!queue_empty(low_q)){
+      disable_interrupt();
+      /* Get the next thread to be executed. */
+      next = dequeue(low_q);
+      enable_interrupt();
+      /* New current thread ID is the one we have just extracted from queue. */
+      current = next->tid;
+      t_state[tid].ticks = QUANTUM_TICKS;
+
+    }
+
+    else{
+      current = idle.tid;
+      next = &idle;
+    }
+
+    disable_interrupt();
+    enqueue(wait_q, &t_state[tid]);
+    enable_interrupt();
+
+    return next;
+
   }
 
   /*
@@ -327,9 +367,6 @@ TCB* scheduler(){
     from the CPU and execute the next one in the waiting queue.
   */
 
-  else if(t_state[tid].state == WAITING){
-
-  }
   else{
     /* To avoid segementation fault error, we just check if the queue is not empty. */
     
@@ -367,9 +404,25 @@ void timer_interrupt(int sig)
   int tid = mythread_gettid();  
   //printf("Thread %d Priority %d Ticks %d\n", t_state[tid].tid, t_state[tid].priority, t_state[tid].ticks);
 
-  if (t_state[tid].priority == LOW_PRIORITY){
+  if(t_state[tid].state == IDLE){
+    TCB* next = scheduler();
+
+      /* 
+       In case we have changed the thread to be executed in the next tick,
+        we perform a context switch.
+      */
+
+      if(t_state[tid].tid != next->tid){
+        /* Change current thread context to new thread context. */
+        printf("*** SWAPCONTEXT FROM %i to %i\n",t_state[tid].tid,next->tid);
+        activator(&t_state[tid], next);
+      }
+
+  }
+
+  else if (t_state[tid].priority == LOW_PRIORITY){
     /* Update the ticks. */
-     t_state[tid].ticks -= 1;
+     t_state[tid].ticks -= 1; 
 
     /* In case the quantum was consumed. */
     if(t_state[tid].ticks == 0){
@@ -395,7 +448,7 @@ void activator(TCB* old, TCB* next){
   /* Execute context switch. */
   swapcontext (&(old->run_env),&(next->run_env));
   //printf("mythread_free: After setcontext, should never get here!!...\n");  
-}
+} 
 
 
 
